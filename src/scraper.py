@@ -11,12 +11,17 @@ LOGGER = logging.getLogger(__name__)
 
 class Scraper:
     def __init__(
-        self, api: Api, exporter: BaseExporter, output_dir: Path, file_format: str
+        self, api: Api, exporter: BaseExporter, output_dir: Path, file_format: str, start_ts: float, end_ts: float
     ):
         self.api: Api = api
         self.exporter: BaseExporter = exporter
         self.output_dir: Path = output_dir
         self.file_format: str = file_format
+        self.start_ts: float = start_ts
+        self.end_ts: float = end_ts
+
+        if start_ts > end_ts:
+            raise ValueError("Start date cannot be after end date")
 
     def get_output_file_path(self, file_name: str) -> Path:
         return (self.output_dir / file_name).with_suffix(f".{self.file_format}")
@@ -38,7 +43,13 @@ class Scraper:
         return summaries
 
     def run(self) -> None:
-        for summary in self.fetch_workout_summaries():
+        summaries = self.fetch_workout_summaries()
+        filtered_summaries = [
+            s for s in summaries
+            if self.start_ts <= int(s.trackid) <= self.end_ts
+        ]
+
+        for summary in filtered_summaries:
             detail = self.api.get_workout_detail(summary)
 
             if not (points := parse_points(summary, detail.data)):

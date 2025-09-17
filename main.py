@@ -1,5 +1,7 @@
 import argparse
 import logging
+import math
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import List
 
@@ -24,6 +26,22 @@ def get_supported_file_formats(exporters: List[BaseExporter]) -> List[str]:
     ]
     assert len(supported_file_formats) > 0
     return supported_file_formats
+
+
+def parse_date_to_timestamp(date_str, is_end=False):
+    if date_str is None:
+        return math.inf if is_end else -math.inf
+
+    try:
+        dt = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+
+        if is_end:
+            dt = dt.replace(hour=23, minute=59, second=59, microsecond=999999)
+
+        return dt.timestamp()
+
+    except ValueError as e:
+        raise ValueError(f"Invalid date format '{date_str}': {e}") from e
 
 
 if __name__ == "__main__":
@@ -54,6 +72,18 @@ if __name__ == "__main__":
         type=Path,
         help="A directory where the downloaded workouts will be stored",
     )
+    ap.add_argument(
+        "--start-date",
+        default=None,
+        type=str,
+        help="Start date in YYYY-MM-DD format (optional)"
+    )
+    ap.add_argument(
+        "--end-date",
+        default=None,
+        type=str,
+        help="End date in YYYY-MM-DD format (optional)"
+    )
 
     args = vars(ap.parse_args())
 
@@ -68,5 +98,9 @@ if __name__ == "__main__":
             for exporter in exporters
             if args["file_format"] in exporter.get_supported_file_formats()
         )
-        scraper = Scraper(api, exporter, args["output_directory"], args["file_format"])
+
+        start_ts = parse_date_to_timestamp(args["start_date"], is_end=False)
+        end_ts = parse_date_to_timestamp(args["end_date"], is_end=True)
+
+        scraper = Scraper(api, exporter, args["output_directory"], args["file_format"], start_ts, end_ts)
         scraper.run()
