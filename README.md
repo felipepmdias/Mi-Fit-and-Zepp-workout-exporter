@@ -1,17 +1,31 @@
 # Mi Fit and Zepp workout exporter
 
-This repository contains an example Python implementation for the [article](https://rolandszabo.com/reverse-engineering/mi-fit/export-mi-fit-and-zepp-workout-data).
+This repository contains a TypeScript implementation for exporting Mi Fit / Zepp workout data, based on the original Python reverse engineering work.
 
 ## Environment setup
 ```bash
-uv sync
+npm install
+npx tsc
 ```
 
 ## Usage
-The script authenticates the user with the API then exports all workouts to the output directory using the specified file format.
+The script authenticates the user with the API then exports all workouts to the output directory using the specified file format (GPX or GeoJSON).
 
 ```bash
-uv run python3 main.py [-h] [-e ENDPOINT] [-t TOKEN] [-f {gpx,geojson,gpkg,parquet,shp,csv,json,xlsx,sql,sqlite3,xml,html}] [-o OUTPUT_DIRECTORY] [--start-date START_DATE] [--end-date END_DATE]
+# Basic usage (auto-login)
+node dist/index.js
+
+# Full options
+node dist/index.js [-h] [-e ENDPOINT] [-t TOKEN] [-f {gpx,geojson}] [-o OUTPUT_DIRECTORY] [--start-date START_DATE] [--end-date END_DATE]
+```
+
+### Examples
+```bash
+# Export to GeoJSON filtering by date
+node dist/index.js -f geojson --start-date 2023-01-01 --end-date 2023-12-31
+
+# Use manual token
+node dist/index.js -t "YOUR_TOKEN_HERE"
 ```
 
 ## Acknowledgements 
