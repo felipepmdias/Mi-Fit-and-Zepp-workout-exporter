@@ -75,7 +75,18 @@ export class Api {
             const response = await this.client.get(`/users/${userId}/members/-1/weightRecords`);
             return WeightHistorySchema.parse(response.data);
         } catch (error: any) {
-            console.error("Erro original na API de peso:", error.message);
+            throw error;
+        }
+    }
+
+
+
+    async getDevices(userId: string): Promise<any> {
+        try {
+            const response = await this.client.get(`/users/${userId}/devices`);
+            return response.data;
+        } catch (error: any) {
+            console.error("Erro original na API de devices:", error.message);
             if (error.response) {
                 console.error("Dados do erro:", JSON.stringify(error.response.data));
             }
