@@ -90,6 +90,7 @@ export const WorkoutSummarySchema = z.object({
   pause_time: z.string().nullable().optional(),
   heartrate_setting_type: z.number().nullable().optional(),
   sport_title: z.string().nullable().optional(),
+  strength_training_group: z.any().nullable().optional(), // Pode ser string JSON ou objeto estruturado
 });
 
 export type WorkoutSummary = z.infer<typeof WorkoutSummarySchema>;
