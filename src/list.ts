@@ -13,6 +13,27 @@ function parseDateArg(dateStr: string): Date | null {
     return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
 }
 
+
+// Função para parsing do campo 'kiloPace' (informações detalhadas por cada kilômetro percorrido)
+function parseKiloPace(kiloPace: string): any[] {
+    // Mapeamento de colunas (base 0) - Caminhada ao ar livre
+    // Campo 1 (index 0): Contador
+    // Campo 2 (index 1): Tempo da Volta
+    // Campo 3 (index 2): Geohash (localização)
+    // Campo 4 (index 3): Ganho da Elevação (metros)
+    // Campo 5 (index 4): Frequência Cardíaca
+    // Campo 6 (index 5): Duração do exercício (acumulado)
+    // Campo 7 (index 6): Perda de Elevação (m) - a confirmar
+    // Campo 8 (index 7): Queima (calorias)
+    // Campo 9 (index 8): Pausa (segundos)
+    // Campo 10 (index 9): Comprimento da pernada (cm) 
+    // Campo 14 (index 13): Frequência de pernada (spm)
+    return [];
+}
+
+
+
+
 // Função para parsing do campo 'lap' (séries)
 function parseLapData(lapData: string): any[] {
     if (!lapData) return [];
@@ -21,7 +42,7 @@ function parseLapData(lapData: string): any[] {
     const rows = lapData.split(';');
     const series = [];
 
-    // Mapeamento de colunas (base 0)
+    // Mapeamento de colunas (base 0) - Atividades de Musculação
     // Campo 1 (index 0): contador
     // Campo 2 (index 1): Duração
     // Campo 5 (index 4): Frequência
