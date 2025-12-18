@@ -1,5 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 import {
+    WeightHistory,
+    WeightHistorySchema,
     WorkoutHistory,
     WorkoutHistorySchema,
     WorkoutDetail,
@@ -63,6 +65,19 @@ export class Api {
         } catch (error) {
             if (axios.isAxiosError(error)) {
                 throw new Error(`API Error: ${error.message} - ${JSON.stringify(error.response?.data)}`);
+            }
+            throw error;
+        }
+    }
+
+    async getWeightRecords(userId: string): Promise<WeightHistory> {
+        try {
+            const response = await this.client.get(`/users/${userId}/members/-1/weightRecords`);
+            return WeightHistorySchema.parse(response.data);
+        } catch (error: any) {
+            console.error("Erro original na API de peso:", error.message);
+            if (error.response) {
+                console.error("Dados do erro:", JSON.stringify(error.response.data));
             }
             throw error;
         }

@@ -89,6 +89,7 @@ export const WorkoutSummarySchema = z.object({
   app_name: z.string(),
   pause_time: z.string().nullable().optional(),
   heartrate_setting_type: z.number().nullable().optional(),
+  sport_title: z.string().nullable().optional(),
 });
 
 export type WorkoutSummary = z.infer<typeof WorkoutSummarySchema>;
@@ -162,3 +163,31 @@ export interface ExportablePoint {
   heart_rate: number | null;
   cadence: number | null;
 }
+
+// Esquema para o resumo do peso
+export const WeightSummarySchema = z.object({
+  weight: z.number(),
+  bmi: z.number(),
+  deviceType: z.number().optional(),
+  source: z.number().optional(),
+  syncHealthConnect: z.boolean().optional(),
+});
+
+// Esquema para o registro de peso
+export const WeightRecordSchema = z.object({
+  userId: z.string(),
+  memberId: z.string(),
+  deviceSource: z.number(),
+  appName: z.string(),
+  generatedTime: z.number(),
+  weightType: z.number(),
+  summary: WeightSummarySchema,
+  createTime: z.number(),
+});
+
+export const WeightHistorySchema = z.object({
+  items: z.array(WeightRecordSchema)
+});
+
+export type WeightRecord = z.infer<typeof WeightRecordSchema>;
+export type WeightHistory = z.infer<typeof WeightHistorySchema>;
