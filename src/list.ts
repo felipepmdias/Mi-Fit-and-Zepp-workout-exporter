@@ -48,8 +48,8 @@ function parseLapData(lapData: string): any[] {
             duracao: parseInt(cols[1]),
             frequencia: parseInt(cols[4]),
             peso: parseFloat(cols[21]),
+            sistemaMedida: cols[23] === '0' ? 'kg' : 'lbs',
             calorias: parseInt(cols[15]),
-            sistemaMedida: cols[16] === '0' ? 'kg' : 'lbs',
             Tempo: parseInt(cols[5])
         });
     }
