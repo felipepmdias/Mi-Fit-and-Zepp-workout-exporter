@@ -1,6 +1,6 @@
 import 'dotenv/config';
-import { Api } from './api';
-import { WorkoutSummary, WorkoutDetail } from './types';
+import { HuamiControlador } from './controllers/HuamiControlador';
+import { IResumoAtividade } from './models/dominio';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -158,7 +158,9 @@ async function main() {
     console.log(`- Início: ${dataInicio ? dataInicio.toLocaleString() : 'Sem filtro'}`);
     console.log(`- Término: ${dataTermino ? dataTermino.toLocaleString() : 'Sem filtro'}`);
 
-    const api = new Api(process.env.ENDPOINT || 'https://api-mifit.huami.com', token);
+    console.log(`- Término: ${dataTermino ? dataTermino.toLocaleString() : 'Sem filtro'}`);
+
+    const controlador = new HuamiControlador(process.env.ENDPOINT || 'https://api-mifit.huami.com', token);
     const outputDir = process.env.OUTPUT_DIRECTORY || './workouts';
 
     if (!fs.existsSync(outputDir)) {
@@ -168,7 +170,7 @@ async function main() {
     console.log("\nIniciando busca de atividades...");
 
     const finalResults: any[] = [];
-    let nextTrackId = undefined;
+    let nextTrackId: number | undefined = undefined;
     let keepFetching = true;
 
     // Timestamps para filtro (trackid é timestamp em segundos, geralmente)
@@ -176,17 +178,18 @@ async function main() {
     const endTs = dataTermino ? dataTermino.getTime() / 1000 : null;
 
     try {
+        // Primeira chamada
         while (keepFetching) {
             console.log(`Buscando página... (A partir de: ${nextTrackId || 'Início'})`);
-            const history = await api.getWorkoutHistory(nextTrackId);
+            const resultado = await controlador.buscarHistoricoAtividades(nextTrackId);
 
-            if (!history.data.summary || history.data.summary.length === 0) {
+            if (!resultado.itens || resultado.itens.length === 0) {
                 keepFetching = false;
                 break;
             }
 
-            for (const s of history.data.summary) {
-                const trackTime = parseInt(s.trackid);
+            for (const s of resultado.itens) {
+                const trackTime = parseInt(s.idRastreamento);
 
                 // Otimização: Se trackTime < startTs (e assumindo ordem decrescente), podemos parar TUDO
                 if (startTs && trackTime < startTs) {
@@ -197,41 +200,35 @@ async function main() {
 
                 // Filtro superior
                 if (endTs && trackTime > endTs) {
-                    continue; // Pula este, mas continua procurando (ainda pode ter mais recentes que o range se a ordem for bagunçada, mas geralmente é decrescente, então "continue" é seguro, mas se fosse estritamente decrescente poderia ser que nem chegamos no range ainda)
-                    // Na verdade, se é decrescente:
-                    // 100, 99, 98 ...
-                    // Range: 50 a 60.
-                    // Se lemos 100 -> continue.
-                    // Se lemos 55 -> processa.
-                    // Se lemos 40 -> break.
+                    continue;
                 }
 
                 // Valido para processar
                 const endDate = new Date(trackTime * 1000);
 
                 let resultItem: any = {
-                    id_atividade: s.trackid,
-                    fonte: s.source,
-                    codigo_tipo: s.type,
-                    titulo_original: s.sport_title || 'N/A',
-                    esporte: getSportName(s.type),
+                    id_atividade: s.idRastreamento,
+                    fonte: s.origem,
+                    codigo_tipo: s.tipoAtividade,
+                    titulo_original: s.tituloEsporte || 'N/A',
+                    esporte: getSportName(s.tipoAtividade),
                     data: toLocalISO(endDate),
                     series: undefined
                 };
 
                 // Detalhes de Musculação
-                if (s.type === 52) {
+                if (s.tipoAtividade === 52) {
                     // Detalhes avançados (séries do lap)
                     if (detalhado) {
                         try {
-                            console.log(`Buscando detalhes avançados para ${s.trackid} (Musculação)...`);
+                            console.log(`Buscando detalhes avançados para ${s.idRastreamento} (Musculação)...`);
                             // Precisamos fazer fetch do detail
-                            const detail = await api.getWorkoutDetail(s);
-                            if (detail.data && detail.data.lap) {
-                                resultItem.series = parseLapData(detail.data.lap);
+                            const detail = await controlador.buscarDetalheAtividade(s);
+                            if (detail.dadosVoltas) {
+                                resultItem.series = parseLapData(detail.dadosVoltas);
                             }
                         } catch (err) {
-                            console.error(`Erro buscando detalhes para ${s.trackid}:`, err);
+                            console.error(`Erro buscando detalhes para ${s.idRastreamento}:`, err);
                         }
                     }
                 }
@@ -241,8 +238,8 @@ async function main() {
 
             if (!keepFetching) break;
 
-            if (history.data.next && history.data.next !== -1) {
-                nextTrackId = history.data.next;
+            if (resultado.proximoId && resultado.proximoId !== -1) {
+                nextTrackId = resultado.proximoId;
             } else {
                 keepFetching = false;
             }

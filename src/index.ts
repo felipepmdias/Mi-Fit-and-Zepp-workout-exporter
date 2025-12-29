@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import 'dotenv/config';
 import { Command } from 'commander';
-import { Api } from './api';
+import { HuamiControlador } from './controllers/HuamiControlador';
 import { getAppToken } from './auth';
 import { Scraper } from './scraper';
 import { GpxExporter } from './exporters/gpx';
@@ -39,7 +39,7 @@ async function main() {
         process.exit(1);
     }
 
-    const api = new Api(options.endpoint, token);
+    const controlador = new HuamiControlador(options.endpoint, token);
 
     let exporter;
     if (options.fileFormat === 'gpx') {
@@ -70,7 +70,7 @@ async function main() {
     const startTs = parseDateToTimestamp(options.startDate, false);
     const endTs = parseDateToTimestamp(options.endDate, true);
 
-    const scraper = new Scraper(api, exporter, options.outputDirectory, options.fileFormat, startTs, endTs);
+    const scraper = new Scraper(controlador, exporter, options.outputDirectory, options.fileFormat, startTs, endTs);
 
     try {
         await scraper.run();

@@ -1,4 +1,5 @@
-import { WorkoutSummary, WorkoutDetailData, ExportablePoint } from './types';
+import { IResumoAtividade, IDetalheAtividade } from './models/dominio';
+import { ExportablePoint } from './types';
 
 const NO_VALUE = -2000000;
 const FIX_BIP_GAPS = false;
@@ -95,18 +96,18 @@ function parseStringData(dataStr: string | null | undefined, separator: string =
         });
 }
 
-function parseTrackData(summary: WorkoutSummary, detail: WorkoutDetailData): RawTrackData {
+function parseTrackData(summary: IResumoAtividade, detail: IDetalheAtividade): RawTrackData {
     // Parsing helpers com lógica específica do python original
     const parseLatLon = (idx: number) => {
-        if (!detail.longitude_latitude) return [];
-        return detail.longitude_latitude.split(';')
+        if (!detail.dadosPosicao) return [];
+        return detail.dadosPosicao.split(';')
             .filter(v => v)
             .map(v => parseInt(v.split(',')[idx], 10));
     };
 
     const parseHeartRate = (idx: number, fallback: number | null = null) => {
-        if (!detail.heart_rate) return [];
-        return detail.heart_rate.split(';')
+        if (!detail.dadosFrequenciaCardiaca) return [];
+        return detail.dadosFrequenciaCardiaca.split(';')
             .filter(v => v)
             .map(v => {
                 const parts = v.split(',');
@@ -117,21 +118,21 @@ function parseTrackData(summary: WorkoutSummary, detail: WorkoutDetailData): Raw
     };
 
     const parseGait = (idx: number) => {
-        if (!detail.gait) return [];
-        return detail.gait.split(';')
+        if (!detail.dadosCadencia) return [];
+        return detail.dadosCadencia.split(';')
             .filter(v => v)
             .map(v => parseInt(v.split(',')[idx], 10));
     };
 
     return {
-        start_time: parseInt(summary.trackid, 10),
-        end_time: parseInt(summary.end_time, 10),
+        start_time: parseInt(summary.idRastreamento, 10),
+        end_time: Math.floor(summary.horarioFim.getTime() / 1000),
         cost_time: -1,
-        distance: parseFloat(summary.dis),
-        times: parseStringData(detail.time),
+        distance: summary.distancia,
+        times: parseStringData(detail.dadosTempo),
         lat: parseLatLon(0),
         lon: parseLatLon(1),
-        alt: parseStringData(detail.altitude),
+        alt: parseStringData(detail.dadosAltitude),
         hrtimes: parseHeartRate(0, 1), // Primeiro elemento, fallback 1
         hr: parseHeartRate(1),        // Segundo elemento
         steptimes: parseGait(0),
@@ -221,7 +222,7 @@ function interpolateData(trackData: RawTrackData): RawTrackData {
 }
 
 
-export function parsePoints(summary: WorkoutSummary, detail: WorkoutDetailData): ExportablePoint[] {
+export function parsePoints(summary: IResumoAtividade, detail: IDetalheAtividade): ExportablePoint[] {
     const trackData = parseTrackData(summary, detail);
 
     if (trackData.lat.length === 0) {

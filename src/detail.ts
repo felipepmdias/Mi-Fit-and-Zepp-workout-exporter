@@ -1,6 +1,6 @@
 import 'dotenv/config';
-import { Api } from './api';
-import { WorkoutSummary } from './types';
+import { HuamiControlador } from './controllers/HuamiControlador';
+import { IResumoAtividade } from './models/dominio';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -21,22 +21,20 @@ async function main() {
         return;
     }
 
-    // Instancia a API
-    const api = new Api(process.env.ENDPOINT || 'https://api-mifit.huami.com', token);
+    // Instancia o Controlador
+    const controlador = new HuamiControlador(process.env.ENDPOINT || 'https://api-mifit.huami.com', token);
 
-    // Parâmetros solicitados
-    const target = {
-        trackid: trackid,
-        source: source
-    };
+    // Precisamos recriar um objeto IResumoAtividade válido para o método buscarDetalheAtividade
+    // Como só idRastreamento e origem são usados para o fetch do detalhe no controlador, podemos mockar o resto
+    const fakeSummary = {
+        idRastreamento: trackid,
+        origem: source
+    } as IResumoAtividade;
 
-    console.log(`Buscando detalhes para TrackID: ${target.trackid}, Source: ${target.source}`);
+    console.log(`Buscando detalhes para TrackID: ${fakeSummary.idRastreamento}, Origem: ${fakeSummary.origem}`);
 
     try {
-        // O método espera um WorkoutSummary, mas só usa trackid e source.
-        const fakeSummary = target as unknown as WorkoutSummary;
-
-        const detail = await api.getWorkoutDetail(fakeSummary);
+        const detail = await controlador.buscarDetalheAtividade(fakeSummary);
 
         const outputDir = path.join(process.cwd(), 'workouts');
         if (!fs.existsSync(outputDir)) {

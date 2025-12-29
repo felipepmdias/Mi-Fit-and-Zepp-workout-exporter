@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { Api } from './api';
+import { HuamiControlador } from './controllers/HuamiControlador';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -12,7 +12,7 @@ async function main() {
         return;
     }
 
-    const api = new Api(process.env.ENDPOINT || 'https://api-mifit.huami.com', token);
+    const controlador = new HuamiControlador(process.env.ENDPOINT || 'https://api-mifit.huami.com', token);
     const outputDir = process.env.OUTPUT_DIRECTORY || './workouts';
 
     if (!fs.existsSync(outputDir)) {
@@ -22,7 +22,7 @@ async function main() {
     console.log(`Buscando dispositivos para usuário ${userId}...`);
 
     try {
-        const data = await api.getDevices(userId);
+        const data = await controlador.buscarDispositivos(userId);
 
         // Salvar raw primeiro para inspeção de campos de data
         const rawFilePath = path.join(outputDir, 'devices_raw.json');
